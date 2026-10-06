@@ -51,6 +51,6 @@ None.
 
 ## SCHEDULE
 
-**DUE DATE**: Release 0.5.0-beta
+**DUE DATE**: Release 0.1-alpha-4
 
 ---
