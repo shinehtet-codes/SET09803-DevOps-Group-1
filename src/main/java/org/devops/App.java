@@ -1,32 +1,24 @@
 package org.devops;
 
-import org.devops.model.Country;
-import org.devops.report.CountryReport;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.ArrayList;
 
 public class App
 {
     /* Connection to MySQL database.
-        */
+     */
     private Connection con = null;
 
     public static void main(String[] args)
     {
+        // Create new application
         App app = new App();
 
+        // Connect to database
         app.connect();
 
-        CountryReport report = new CountryReport();
-
-        ArrayList<Country> countries =
-                report.getAllCountries(app.getConnection());
-
-        report.printCountries(countries);
-
+        // Disconnect from database
         app.disconnect();
     }
 
@@ -41,7 +33,7 @@ public class App
     }
 
     /* Connect to the MySQL world database.
-        */
+     */
     public void connect()
     {
         try
