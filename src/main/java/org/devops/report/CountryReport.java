@@ -10,7 +10,8 @@ import java.util.ArrayList;
 
 public class CountryReport
 {
-    /* US-01: Returns all countries ordered by population descending.
+    /**
+     * US-01: Returns all countries ordered by population descending.
      */
     public ArrayList<Country> getAllCountries(Connection con)
     {
@@ -61,8 +62,9 @@ public class CountryReport
         return countries;
     }
 
-    /* Prints a country report.
-        */
+    /**
+     * Prints a country report.
+     */
     public void printCountries(ArrayList<Country> countries)
     {
         System.out.printf(
