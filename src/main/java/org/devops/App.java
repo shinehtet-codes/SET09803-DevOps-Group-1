@@ -22,6 +22,16 @@ public class App
         app.disconnect();
     }
 
+    /**
+     * Returns the active MySQL database connection.
+     *
+     * @return active database connection
+     */
+    public Connection getConnection()
+    {
+        return con;
+    }
+
     /* Connect to the MySQL world database.
         */
     public void connect()
