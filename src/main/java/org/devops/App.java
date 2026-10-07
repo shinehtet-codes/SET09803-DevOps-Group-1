@@ -1,8 +1,12 @@
 package org.devops;
 
+import org.devops.model.CapitalCity;
+import org.devops.report.CapitalReport;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 public class App
 {
@@ -17,6 +21,12 @@ public class App
 
         // Connect to database
         app.connect();
+        CapitalReport report = new CapitalReport();
+
+        ArrayList<CapitalCity> capitals =
+                report.getAllCapitalCities(app.getConnection());
+
+        report.printCapitalCities(capitals);
 
         // Disconnect from database
         app.disconnect();
