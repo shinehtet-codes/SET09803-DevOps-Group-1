@@ -1,8 +1,12 @@
 package org.devops;
 
+import org.devops.model.Country;
+import org.devops.report.CountryReport;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 public class App
 {
@@ -17,7 +21,15 @@ public class App
 
         // Connect to database
         app.connect();
+        CountryReport report = new CountryReport();
 
+        ArrayList<Country> countries =
+                report.getCountriesByContinent(
+                        app.getConnection(),
+                        "Asia"
+                );
+
+        report.printCountries(countries);
         // Disconnect from database
         app.disconnect();
     }
