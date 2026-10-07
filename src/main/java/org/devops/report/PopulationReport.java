@@ -105,4 +105,55 @@ public class PopulationReport
             );
         }
     }
+    /**
+     * US-23: Returns population breakdown for every country.
+     */
+    public ArrayList<PopulationSummary> getPopulationByCountry(
+            Connection con)
+    {
+        ArrayList<PopulationSummary> summaries =
+                new ArrayList<>();
+
+        String sql =
+                "SELECT c.Name AS AreaName, " +
+                        "c.Population AS TotalPopulation, " +
+                        "COALESCE(cp.CityPopulation, 0) AS CityPopulation " +
+                        "FROM country c " +
+                        "LEFT JOIN (" +
+                        "SELECT CountryCode, SUM(Population) AS CityPopulation " +
+                        "FROM city " +
+                        "GROUP BY CountryCode" +
+                        ") cp ON c.Code = cp.CountryCode " +
+                        "ORDER BY c.Name ASC";
+
+        try
+        {
+            Statement stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+
+            while (rs.next())
+            {
+                PopulationSummary summary =
+                        new PopulationSummary(
+                                rs.getString("AreaName"),
+                                rs.getLong("TotalPopulation"),
+                                rs.getLong("CityPopulation")
+                        );
+
+                summaries.add(summary);
+            }
+
+            rs.close();
+            stmt.close();
+        }
+        catch (SQLException e)
+        {
+            System.out.println(
+                    "Failed to get population by country."
+            );
+            System.out.println(e.getMessage());
+        }
+
+        return summaries;
+    }
 }
