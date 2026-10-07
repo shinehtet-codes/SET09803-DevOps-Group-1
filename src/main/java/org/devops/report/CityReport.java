@@ -2,10 +2,7 @@ package org.devops.report;
 
 import org.devops.model.City;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 
 public class CityReport
@@ -74,4 +71,54 @@ public class CityReport
             );
         }
     }
+    /**
+     * US-08: Returns cities in a selected continent.
+     */
+    public ArrayList<City> getCitiesByContinent(
+            Connection con,
+            String continent)
+    {
+        ArrayList<City> cities = new ArrayList<>();
+
+        String sql =
+                "SELECT ci.Name, co.Name AS Country, " +
+                        "ci.District, ci.Population " +
+                        "FROM city ci " +
+                        "JOIN country co ON ci.CountryCode = co.Code " +
+                        "WHERE co.Continent = ? " +
+                        "ORDER BY ci.Population DESC, ci.ID ASC";
+
+        try
+        {
+            PreparedStatement stmt = con.prepareStatement(sql);
+            stmt.setString(1, continent);
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next())
+            {
+                City city = new City(
+                        rs.getString("Name"),
+                        rs.getString("Country"),
+                        rs.getString("District"),
+                        rs.getLong("Population")
+                );
+
+                cities.add(city);
+            }
+
+            rs.close();
+            stmt.close();
+        }
+        catch (SQLException e)
+        {
+            System.out.println(
+                    "Failed to get cities in continent: " + continent
+            );
+            System.out.println(e.getMessage());
+        }
+
+        return cities;
+    }
+
 }
