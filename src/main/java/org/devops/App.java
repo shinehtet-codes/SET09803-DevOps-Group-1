@@ -11,7 +11,7 @@ import java.util.ArrayList;
 public class App
 {
     /* Connection to MySQL database.
-        */
+     */
     private Connection con = null;
 
     public static void main(String[] args)
@@ -43,7 +43,7 @@ public class App
     }
 
     /* Connect to the MySQL world database.
-        */
+     */
     public void connect()
     {
         try

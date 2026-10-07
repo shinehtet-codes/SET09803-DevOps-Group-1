@@ -1,49 +1,24 @@
 package org.devops.model;
 
-/* Represents a country from the world database.
+/**
+ * Represents a country used in country reports.
  */
 public class Country
 {
-    /* Country code.
-        */
     private String code;
-
-    /* Country name.
-        */
     private String name;
-
-    /* Continent where the country is located.
-        */
     private String continent;
-
-    /* Region where the country is located.
-        */
     private String region;
-
-    /* Population of the country.
-        */
     private long population;
+    private String capital;
 
-    /* ID of the country's capital city.
-        */
-    private Integer capital;
-
-    /* Creates a country.
-     *
-             * @param code Country code.
-     * @param name Country name.
-     * @param continent Country continent.
-     * @param region Country region.
-     * @param population Country population.
-     * @param capital Capital city ID.
-        */
     public Country(
             String code,
             String name,
             String continent,
             String region,
             long population,
-            Integer capital)
+            String capital)
     {
         this.code = code;
         this.name = name;
@@ -78,7 +53,7 @@ public class Country
         return population;
     }
 
-    public Integer getCapital()
+    public String getCapital()
     {
         return capital;
     }
