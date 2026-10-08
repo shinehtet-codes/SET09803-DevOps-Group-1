@@ -2,10 +2,7 @@ package org.devops.report;
 
 import org.devops.model.CapitalCity;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 
 public class CapitalReport
@@ -69,5 +66,53 @@ public class CapitalReport
                     capital.getPopulation()
             );
         }
+    }
+    /**
+     * US-16: Returns capital cities in a selected continent.
+     */
+    public ArrayList<CapitalCity> getCapitalCitiesByContinent(
+            Connection con,
+            String continent)
+    {
+        ArrayList<CapitalCity> capitals = new ArrayList<>();
+
+        String sql =
+                "SELECT ci.Name, co.Name AS Country, ci.Population " +
+                        "FROM country co " +
+                        "JOIN city ci ON co.Capital = ci.ID " +
+                        "WHERE co.Continent = ? " +
+                        "ORDER BY ci.Population DESC, ci.ID ASC";
+
+        try
+        {
+            PreparedStatement stmt = con.prepareStatement(sql);
+            stmt.setString(1, continent);
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next())
+            {
+                CapitalCity capital = new CapitalCity(
+                        rs.getString("Name"),
+                        rs.getString("Country"),
+                        rs.getLong("Population")
+                );
+
+                capitals.add(capital);
+            }
+
+            rs.close();
+            stmt.close();
+        }
+        catch (SQLException e)
+        {
+            System.out.println(
+                    "Failed to get capital cities in continent: "
+                            + continent
+            );
+            System.out.println(e.getMessage());
+        }
+
+        return capitals;
     }
 }
