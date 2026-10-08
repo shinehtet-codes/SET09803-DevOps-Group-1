@@ -2,10 +2,7 @@ package org.devops.report;
 
 import org.devops.model.Country;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 
 public class CountryReport
@@ -56,6 +53,65 @@ public class CountryReport
         catch (SQLException e)
         {
             System.out.println("Failed to get all countries.");
+            System.out.println(e.getMessage());
+        }
+
+        return countries;
+    }
+
+    /**
+     * US-02: Returns countries in a selected continent.
+     */
+    public ArrayList<Country> getCountriesByContinent(
+            Connection con,
+            String continent)
+    {
+        ArrayList<Country> countries = new ArrayList<>();
+
+        String sql =
+                "SELECT c.Code, c.Name, c.Continent, c.Region, " +
+                        "c.Population, cap.Name AS Capital " +
+                        "FROM country c " +
+                        "LEFT JOIN city cap ON c.Capital = cap.ID " +
+                        "WHERE c.Continent = ? " +
+                        "ORDER BY c.Population DESC, c.Code ASC";
+
+        try
+        {
+            PreparedStatement stmt = con.prepareStatement(sql);
+            stmt.setString(1, continent);
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next())
+            {
+                String capital = rs.getString("Capital");
+
+                if (capital == null)
+                {
+                    capital = "N/A";
+                }
+
+                Country country = new Country(
+                        rs.getString("Code"),
+                        rs.getString("Name"),
+                        rs.getString("Continent"),
+                        rs.getString("Region"),
+                        rs.getLong("Population"),
+                        capital
+                );
+
+                countries.add(country);
+            }
+
+            rs.close();
+            stmt.close();
+        }
+        catch (SQLException e)
+        {
+            System.out.println(
+                    "Failed to get countries in continent: " + continent
+            );
             System.out.println(e.getMessage());
         }
 
