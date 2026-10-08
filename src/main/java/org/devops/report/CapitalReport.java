@@ -115,4 +115,45 @@ public class CapitalReport
 
         return capitals;
     }
+    /**
+     * US-17: Capital cities in a region.
+     */
+    public ArrayList<CapitalCity> getCapitalCitiesByRegion(Connection con, String region)
+    {
+        ArrayList<CapitalCity> results = new ArrayList<>();
+
+        if (con == null)
+        {
+            System.out.println("No active database connection.");
+            return results;
+        }
+
+        String sql =
+                "SELECT ci.Name, co.Name AS Country, ci.Population " +
+                        "FROM country co JOIN city ci ON co.Capital = ci.ID " +
+                        "WHERE co.Region = ? " +
+                        "ORDER BY ci.Population DESC, ci.ID ASC";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql))
+        {
+            stmt.setString(1, region);
+
+            try (ResultSet rs = stmt.executeQuery())
+            {
+                while (rs.next())
+                {
+                    results.add(
+                            new CapitalCity(rs.getString("Name"), rs.getString("Country"),
+                                    rs.getLong("Population"))
+                    );
+                }
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("Failed to execute US-17: " + e.getMessage());
+        }
+
+        return results;
+    }
 }
