@@ -8,7 +8,7 @@
 
     <groupId>org.devops</groupId>
     <artifactId>SET09803-DevOps-Group-1</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.1-alpha-3</version>
 
     <properties>
         <maven.compiler.source>25</maven.compiler.source>
@@ -42,7 +42,7 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>3.3.0</version>
                 <configuration>
-                    <finalName>semApp</finalName>
+                    <finalName>world-population-reports-v0.1-alpha-3</finalName>
                     <archive>
                         <manifest>
                             <mainClass>org.devops.App</mainClass>
