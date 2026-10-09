@@ -4,11 +4,11 @@ Population reporting system developed using Java, Maven, MySQL, Docker and GitHu
 
 The project applies Scrum and DevOps practices to produce reports on countries, cities, capital cities, population statistics and languages.
 
-![workflow](https://github.com/shinehtet-codes/SET09803-DevOps-Group-1/actions/workflows/main.yml/badge.svg)
+[![CI](https://github.com/shinehtet-codes/SET09803-DevOps-Group-1/actions/workflows/main.yml/badge.svg)](https://github.com/shinehtet-codes/SET09803-DevOps-Group-1/actions/workflows/main.yml)
 
-[![LICENSE](https://img.shields.io/github/license/shinehtet-codes/SET09803-DevOps-Group-1.svg?style=flat-square)](https://github.com/shinehtet-codes/SET09803-DevOps-Group-1/blob/master/LICENSE)
+[![License](https://img.shields.io/github/license/shinehtet-codes/SET09803-DevOps-Group-1?style=flat-square)](https://github.com/shinehtet-codes/SET09803-DevOps-Group-1/blob/master/LICENSE)
 
-[![Releases](https://img.shields.io/github/release/shinehtet-codes/all.svg?style=flat-square)](https://github.com/shinehtet-codes/releases)
+[![Latest Release](https://img.shields.io/github/v/release/shinehtet-codes/SET09803-DevOps-Group-1?include_prereleases&style=flat-square)](https://github.com/shinehtet-codes/SET09803-DevOps-Group-1/releases)
 ## Technologies
 
 - Java
