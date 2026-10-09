@@ -163,4 +163,41 @@ public class CityReport
         return results;
     }
 
+    /**
+     * US-10: Cities in a country
+     */
+    public ArrayList<City> getCitiesByCountry(Connection con, String country)
+    {
+        ArrayList<City> results = new ArrayList<>();
+        if (con == null || country == null || country.isBlank())
+        {
+            System.out.println("Invalid database connection or report parameter.");
+            return results;
+        }
+
+        String sql =
+                "SELECT ci.Name, co.Name AS Country, ci.District, ci.Population " +
+                        "FROM city ci " +
+                        "JOIN country co ON ci.CountryCode = co.Code " +
+                        "WHERE co.Name = ? " +
+                        "ORDER BY ci.Population DESC, ci.ID ASC";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql))
+        {
+            stmt.setString(1, country.trim());
+            try (ResultSet rs = stmt.executeQuery())
+            {
+                while (rs.next())
+                {
+                    results.add(new City(rs.getString("Name"), rs.getString("Country"), rs.getString("District"), rs.getLong("Population")));
+                }
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("US-10 failed: " + e.getMessage());
+        }
+        return results;
+    }
+
 }
