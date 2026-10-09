@@ -156,4 +156,45 @@ public class PopulationReport
 
         return summaries;
     }
+    /**
+     * US-24: Returns the world population breakdown.
+     */
+    public ArrayList<PopulationSummary> getWorldPopulation(Connection con)
+    {
+        ArrayList<PopulationSummary> summaries = new ArrayList<>();
+
+        if (con == null)
+        {
+            System.out.println("No active database connection.");
+            return summaries;
+        }
+
+        String sql =
+                "SELECT SUM(c.Population) AS TotalPopulation, " +
+                        "COALESCE(SUM(cp.CityPopulation), 0) AS CityPopulation " +
+                        "FROM country c " +
+                        "LEFT JOIN (" +
+                        "SELECT CountryCode, SUM(Population) AS CityPopulation " +
+                        "FROM city GROUP BY CountryCode" +
+                        ") cp ON c.Code = cp.CountryCode";
+
+        try (Statement stmt = con.createStatement();
+             ResultSet rs = stmt.executeQuery(sql))
+        {
+            if (rs.next())
+            {
+                summaries.add(new PopulationSummary(
+                        "World",
+                        rs.getLong("TotalPopulation"),
+                        rs.getLong("CityPopulation")
+                ));
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("Failed to execute US-24: " + e.getMessage());
+        }
+
+        return summaries;
+    }
 }
