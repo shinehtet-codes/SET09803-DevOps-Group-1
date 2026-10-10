@@ -197,4 +197,40 @@ public class PopulationReport
 
         return summaries;
     }
+    /**
+     * US-25: Population breakdown by continent
+     */
+    public ArrayList<PopulationSummary> getPopulationByContinent(Connection con)
+    {
+        ArrayList<PopulationSummary> results = new ArrayList<>();
+        if (con == null)
+        {
+            System.out.println("No database connection.");
+            return results;
+        }
+
+        String sql =
+                "SELECT c.Continent AS AreaName, SUM(c.Population) AS TotalPopulation, COALESCE(SUM(cp.CityPopulation), 0) AS CityPopulation " +
+                        "FROM country c " +
+                        "LEFT JOIN (SELECT CountryCode, SUM(Population) AS CityPopulation " +
+                        "FROM city " +
+                        "GROUP BY CountryCode) cp ON c.Code = cp.CountryCode " +
+                        "GROUP BY c.Continent " +
+                        "ORDER BY c.Continent ASC";
+
+        try (Statement stmt = con.createStatement();
+             ResultSet rs = stmt.executeQuery(sql))
+        {
+            while (rs.next())
+            {
+                results.add(new PopulationSummary(rs.getString("AreaName"), rs.getLong("TotalPopulation"), rs.getLong("CityPopulation")));
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("US-25 failed: " + e.getMessage());
+        }
+        return results;
+    }
+
 }
