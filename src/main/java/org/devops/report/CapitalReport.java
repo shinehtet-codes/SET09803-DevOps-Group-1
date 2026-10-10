@@ -156,4 +156,41 @@ public class CapitalReport
 
         return results;
     }
+    /**
+     * US-18: Top N capital cities in the world
+     */
+    public ArrayList<CapitalCity> getTopNCapitalCitiesInWorld(Connection con, int n)
+    {
+        ArrayList<CapitalCity> results = new ArrayList<>();
+        if (con == null || n <= 0)
+        {
+            System.out.println("Invalid database connection or report parameter.");
+            return results;
+        }
+
+        String sql =
+                "SELECT ci.Name, co.Name AS Country, ci.Population " +
+                        "FROM country co " +
+                        "JOIN city ci ON co.Capital = ci.ID " +
+                        "ORDER BY ci.Population DESC, ci.ID ASC " +
+                        "LIMIT ?";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql))
+        {
+            stmt.setInt(1, n);
+            try (ResultSet rs = stmt.executeQuery())
+            {
+                while (rs.next())
+                {
+                    results.add(new CapitalCity(rs.getString("Name"), rs.getString("Country"), rs.getLong("Population")));
+                }
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("US-18 failed: " + e.getMessage());
+        }
+        return results;
+    }
+
 }
