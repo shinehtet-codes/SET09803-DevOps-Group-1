@@ -146,4 +146,83 @@ public class CountryReport
             );
         }
     }
+    /**
+     * US-03: Countries in a region.
+     */
+    public ArrayList<Country> getCountriesByRegion(Connection con, String region)
+    {
+        ArrayList<Country> results = new ArrayList<>();
+
+        if (con == null)
+        {
+            System.out.println("No active database connection.");
+            return results;
+        }
+        String sql =
+                "SELECT c.Code, c.Name, c.Continent, c.Region, c.Population, cap.Name AS Capital " +
+                        "FROM country c LEFT JOIN city cap ON c.Capital = cap.ID " +
+                        "WHERE c.Region = ? " +
+                        "ORDER BY c.Population DESC, c.Code ASC";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql))
+        {
+            stmt.setString(1, region);
+
+            try (ResultSet rs = stmt.executeQuery())
+            {
+                while (rs.next())
+                {
+                    results.add(
+                            new Country(rs.getString("Code"), rs.getString("Name"),
+                                    rs.getString("Continent"), rs.getString("Region"),
+                                    rs.getLong("Population"),
+                                    rs.getString("Capital") == null ? "N/A" : rs.getString("Capital"))
+                    );
+                }
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("Failed to execute US-03: " + e.getMessage());
+        }
+
+        return results;
+    }
+    /**
+     * US-04: Top N countries in the world
+     */
+
+    public ArrayList<Country> getTopNCountriesInWorld(Connection con, int n)
+    {
+        ArrayList<Country> results = new ArrayList<>();
+        if (con == null || n <= 0)
+        {
+            System.out.println("Invalid database connection or report parameter.");
+            return results;
+        }
+
+        String sql =
+                "SELECT c.Code, c.Name, c.Continent, c.Region, c.Population, cap.Name AS Capital " +
+                        "FROM country c " +
+                        "LEFT JOIN city cap ON c.Capital = cap.ID " +
+                        "ORDER BY c.Population DESC, c.Code ASC " +
+                        "LIMIT ?";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql))
+        {
+            stmt.setInt(1, n);
+            try (ResultSet rs = stmt.executeQuery())
+            {
+                while (rs.next())
+                {
+                    results.add(new Country(rs.getString("Code"), rs.getString("Name"), rs.getString("Continent"), rs.getString("Region"), rs.getLong("Population"), rs.getString("Capital") == null ? "N/A" : rs.getString("Capital")));
+                }
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("US-04 failed: " + e.getMessage());
+        }
+        return results;
+    }
 }
