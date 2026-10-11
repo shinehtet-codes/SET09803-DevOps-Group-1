@@ -193,4 +193,39 @@ public class CapitalReport
         return results;
     }
 
+
+
+    public ArrayList<CapitalCity> getTopNCapitalCitiesByRegion(
+            Connection con, String region, int n)
+    {
+        ArrayList<CapitalCity> capitals = new ArrayList<>();
+        if (con == null || region == null || region.isBlank() || n <= 0)
+        {
+            System.out.println("Valid region and positive N required.");
+            return capitals;
+        }
+        String sql = "SELECT ci.Name, co.Name AS Country, ci.Population " +
+                "FROM country co JOIN city ci ON co.Capital = ci.ID " +
+                "WHERE co.Region = ? ORDER BY ci.Population DESC, ci.ID ASC LIMIT ?";
+        try (PreparedStatement stmt = con.prepareStatement(sql))
+        {
+            stmt.setString(1, region.trim());
+            stmt.setInt(2, n);
+            try (ResultSet rs = stmt.executeQuery())
+            {
+                while (rs.next())
+                {
+                    capitals.add(new CapitalCity(rs.getString("Name"),
+                            rs.getString("Country"), rs.getLong("Population")));
+                }
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("US-20 failed: " + e.getMessage());
+        }
+        return capitals;
+    }
+
+
 }
