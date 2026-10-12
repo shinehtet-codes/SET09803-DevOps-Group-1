@@ -229,7 +229,7 @@ public class CountryReport
             Connection con, String continent, int n)
     {
         ArrayList<Country> countries = new ArrayList<>();
-        if (con == null  continent == null  continent.isBlank() || n <= 0)
+        if (con == null || continent == null || continent.isBlank() || n <= 0)
         {
             System.out.println("Valid connection, continent and positive N required.");
             return countries;
