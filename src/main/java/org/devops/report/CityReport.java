@@ -274,29 +274,28 @@ public class CityReport
         }
         return cities;
     }
-
     /**
-     * US-32-top-n-cities-district
-     * Returns the N most populated cities in the selected district.
+     * US-31-top-n-cities-country
+     * Returns the N most populated cities in the selected country.
      */
-    public ArrayList<City> getTopNCitiesByDistrict(Connection con, String district, int n)
+    public ArrayList<City> getTopNCitiesByCountry(Connection con, String country, int n)
     {
         ArrayList<City> cities = new ArrayList<>();
-        if (con == null || district == null || district.isBlank() || n <= 0)
+        if (con == null || country == null || country.isBlank() || n <= 0)
         {
-            System.out.println("Valid connection, district and positive N required.");
+            System.out.println("Valid connection, country and positive N required.");
             return cities;
         }
 
         String sql =
                 "SELECT ci.Name, co.Name AS Country, ci.District, ci.Population " +
                         "FROM city ci JOIN country co ON ci.CountryCode = co.Code " +
-                        "WHERE ci.District = ? " +
+                        "WHERE co.Name = ? " +
                         "ORDER BY ci.Population DESC, ci.ID ASC LIMIT ?";
 
         try (PreparedStatement stmt = con.prepareStatement(sql))
         {
-            stmt.setString(1, district.trim());
+            stmt.setString(1, country.trim());
             stmt.setInt(2, n);
             try (ResultSet rs = stmt.executeQuery())
             {
@@ -309,10 +308,8 @@ public class CityReport
         }
         catch (SQLException e)
         {
-            System.out.println("US-32 failed: " + e.getMessage());
+            System.out.println("US-31 failed: " + e.getMessage());
         }
         return cities;
     }
-
-
 }
