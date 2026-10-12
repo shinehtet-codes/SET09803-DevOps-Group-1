@@ -274,4 +274,42 @@ public class CityReport
         }
         return cities;
     }
+    /**
+     * US-31-top-n-cities-country
+     * Returns the N most populated cities in the selected country.
+     */
+    public ArrayList<City> getTopNCitiesByCountry(Connection con, String country, int n)
+    {
+        ArrayList<City> cities = new ArrayList<>();
+        if (con == null || country == null || country.isBlank() || n <= 0)
+        {
+            System.out.println("Valid connection, country and positive N required.");
+            return cities;
+        }
+
+        String sql =
+                "SELECT ci.Name, co.Name AS Country, ci.District, ci.Population " +
+                        "FROM city ci JOIN country co ON ci.CountryCode = co.Code " +
+                        "WHERE co.Name = ? " +
+                        "ORDER BY ci.Population DESC, ci.ID ASC LIMIT ?";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql))
+        {
+            stmt.setString(1, country.trim());
+            stmt.setInt(2, n);
+            try (ResultSet rs = stmt.executeQuery())
+            {
+                while (rs.next())
+                {
+                    cities.add(new City(rs.getString("Name"), rs.getString("Country"),
+                            rs.getString("District"), rs.getLong("Population")));
+                }
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("US-31 failed: " + e.getMessage());
+        }
+        return cities;
+    }
 }
