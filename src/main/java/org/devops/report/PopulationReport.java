@@ -229,32 +229,6 @@ public class PopulationReport
         }
         return results;
     }
-    public Long getCountryPopulation(Connection con, String countryName)
-    {
-        if (con == null || countryName == null || countryName.isBlank())
-        {
-            System.out.println("Valid connection and country name required.");
-            return null;
-        }
-        String sql = "SELECT Population AS TotalPopulation FROM country WHERE Name = ?";
-        try (PreparedStatement stmt = con.prepareStatement(sql))
-        {
-            stmt.setString(1, countryName.trim());
-            try (ResultSet rs = stmt.executeQuery())
-            {
-                if (rs.next())
-                {
-                    return rs.getLong("TotalPopulation");
-                }
-            }
-        }
-        catch (SQLException e)
-        {
-            System.out.println("US-27 failed: " + e.getMessage());
-        }
-        return null; // null means no matching country or query could not complete
-    }
-
 
     /**
      * US-26-region-population
@@ -287,6 +261,36 @@ public class PopulationReport
             System.out.println("US-26 failed: " + e.getMessage());
         }
         return 0L;
+    }
+
+    /**
+     *US-27-country-population
+     */
+
+    public Long getCountryPopulation(Connection con, String countryName)
+    {
+        if (con == null || countryName == null || countryName.isBlank())
+        {
+            System.out.println("Valid connection and country name required.");
+            return null;
+        }
+        String sql = "SELECT Population AS TotalPopulation FROM country WHERE Name = ?";
+        try (PreparedStatement stmt = con.prepareStatement(sql))
+        {
+            stmt.setString(1, countryName.trim());
+            try (ResultSet rs = stmt.executeQuery())
+            {
+                if (rs.next())
+                {
+                    return rs.getLong("TotalPopulation");
+                }
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("US-27 failed: " + e.getMessage());
+        }
+        return null; // null means no matching country or query could not complete
     }
 
 
