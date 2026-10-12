@@ -225,6 +225,10 @@ public class CountryReport
         }
         return results;
     }
+
+    /**
+     * US-05-top-n-countries-continent
+     */
     public ArrayList<Country> getTopNCountriesByContinent(
             Connection con, String continent, int n)
     {

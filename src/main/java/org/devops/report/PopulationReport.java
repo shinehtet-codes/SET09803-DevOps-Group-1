@@ -229,6 +229,10 @@ public class PopulationReport
         }
         return results;
     }
+
+    /**
+     * US-26-region-population
+     */
     public long getRegionPopulation(Connection con, String region)
     {
         if (con == null || region == null || region.isBlank())
