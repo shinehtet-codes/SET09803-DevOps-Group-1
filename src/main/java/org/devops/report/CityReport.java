@@ -203,7 +203,7 @@ public class CityReport
     public ArrayList<City> getCitiesByDistrict(Connection con, String district)
     {
         ArrayList<City> cities = new ArrayList<>();
-        if (con == null  district == null  district.isBlank())
+        if (con == null || district == null || district.isBlank())
         {
             System.out.println("Valid connection and district required.");
             return cities;
