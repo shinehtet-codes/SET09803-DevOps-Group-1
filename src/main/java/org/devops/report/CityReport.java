@@ -200,34 +200,4 @@ public class CityReport
         return results;
     }
 
-    public ArrayList<City> getTopNCitiesInWorld(Connection con, int n)
-    {
-        ArrayList<City> cities = new ArrayList<>();
-        if (con == null || n <= 0)
-        {
-            System.out.println("Positive N and valid connection required.");
-            return cities;
-        }
-        String sql = "SELECT ci.Name, co.Name AS Country, ci.District, ci.Population " +
-                "FROM city ci JOIN country co ON ci.CountryCode = co.Code " +
-                "ORDER BY ci.Population DESC, ci.ID ASC LIMIT ?";
-        try (PreparedStatement stmt = con.prepareStatement(sql))
-        {
-            stmt.setInt(1, n);
-            try (ResultSet rs = stmt.executeQuery())
-            {
-                while (rs.next())
-                {
-                    cities.add(new City(rs.getString("Name"), rs.getString("Country"),
-                            rs.getString("District"), rs.getLong("Population")));
-                }
-            }
-        }
-        catch (SQLException e)
-        {
-            System.out.println("US-12 failed: " + e.getMessage());
-        }
-        return cities;
-    }
-
 }
