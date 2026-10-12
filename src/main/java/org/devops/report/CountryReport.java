@@ -273,4 +273,41 @@ public class CountryReport
         }
         return countries;
     }
+
+    /**
+     *US-06-top-n-countries-region
+     */
+    public ArrayList<Country> getTopNCountriesByRegion(Connection con, String region, int n)
+    {
+        ArrayList<Country> countries = new ArrayList<>();
+        if (con == null || region == null || region.isBlank() || n <= 0)
+        {
+            System.out.println("Valid region and positive N required.");
+            return countries;
+        }
+        String sql = "SELECT c.Code, c.Name, c.Continent, c.Region, c.Population, " +
+                "cap.Name AS Capital FROM country c " +
+                "LEFT JOIN city cap ON c.Capital = cap.ID " +
+                "WHERE c.Region = ? ORDER BY c.Population DESC, c.Code ASC LIMIT ?";
+        try (PreparedStatement stmt = con.prepareStatement(sql))
+        {
+            stmt.setString(1, region.trim());
+            stmt.setInt(2, n);
+            try (ResultSet rs = stmt.executeQuery())
+            {
+                while (rs.next())
+                {
+                    String capital = rs.getString("Capital");
+                    countries.add(new Country(rs.getString("Code"), rs.getString("Name"),
+                            rs.getString("Continent"), rs.getString("Region"),
+                            rs.getLong("Population"), capital == null ? "N/A" : capital));
+                }
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("US-06 failed: " + e.getMessage());
+        }
+        return countries;
+    }
 }
