@@ -307,6 +307,41 @@ public class PopulationReport
         }
         return null; // null means no matching country or query could not complete
     }
+    /**
+     * US-28-district-population
+     * Returns total population of cities in a selected district.
+     * Returns null when no matching district exists or the query fails.
+     */
+    public Long getDistrictPopulation(Connection con, String district)
+    {
+        if (con == null || district == null || district.isBlank())
+        {
+            System.out.println("Valid connection and district required.");
+            return null;
+        }
+
+        String sql =
+                "SELECT SUM(Population) AS TotalPopulation " +
+                        "FROM city WHERE District = ?";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql))
+        {
+            stmt.setString(1, district.trim());
+            try (ResultSet rs = stmt.executeQuery())
+            {
+                if (rs.next())
+                {
+                    long total = rs.getLong("TotalPopulation");
+                    return rs.wasNull() ? null : total;
+                }
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("US-28 failed: " + e.getMessage());
+        }
+        return null;
+    }
 
 
 }
