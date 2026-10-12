@@ -342,6 +342,4 @@ public class PopulationReport
         }
         return null;
     }
-
-
 }
