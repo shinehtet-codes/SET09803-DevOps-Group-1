@@ -1,4 +1,4 @@
 FROM eclipse-temurin:25-jdk
-COPY ./target/world-population-reports-v0.1-alpha-4.jar /tmp
+COPY ./target/world-population-reports-v0.1-alpha-5.jar /tmp
 WORKDIR /tmp
-ENTRYPOINT ["java", "-jar", "world-population-reports-v0.1-alpha-4.jar"]
+ENTRYPOINT ["java", "-jar", "world-population-reports-v0.1-alpha-5.jar"]
