@@ -342,4 +342,39 @@ public class PopulationReport
         }
         return null;
     }
+    /**
+     * US-29-city-population
+     * Returns the population of a city selected by name.
+     * Returns null when no matching city exists or the query fails.
+     */
+    public Long getCityPopulation(Connection con, String cityName)
+    {
+        if (con == null || cityName == null || cityName.isBlank())
+        {
+            System.out.println("Valid connection and city name required.");
+            return null;
+        }
+
+        String sql =
+                "SELECT Population AS TotalPopulation " +
+                        "FROM city WHERE Name = ? ORDER BY ID ASC LIMIT 1";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql))
+        {
+            stmt.setString(1, cityName.trim());
+            try (ResultSet rs = stmt.executeQuery())
+            {
+                if (rs.next())
+                {
+                    return rs.getLong("TotalPopulation");
+                }
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("US-29 failed: " + e.getMessage());
+        }
+        return null;
+    }
+
 }
