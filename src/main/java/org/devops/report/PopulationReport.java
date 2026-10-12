@@ -8,6 +8,21 @@ import java.util.ArrayList;
 public class PopulationReport
 {
     /**
+     * US-21-population-in-each-continent
+     * Returns total, city and non-city population (with percentages)
+     * for every continent.Reuses the existing US-25 aggregation.
+     */
+    public ArrayList<PopulationSummary> getPopulationInEachContinent(Connection con)
+    {
+        if (con == null)
+        {
+            System.out.println("Valid database connection required.");
+            return new ArrayList<>();
+        }
+        return getPopulationByContinent(con);
+    }
+
+    /**
      * US-22: Returns a population breakdown for every region.
      */
     public ArrayList<PopulationSummary> getPopulationByRegion(
