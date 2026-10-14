@@ -46,9 +46,9 @@ It contains 32 reporting use cases organised into five categories:
 - Population Reports
 - Language Reports
 
-[View Use Case Diagram](docs/diagrams/SET09803_Group_1l_Use_Case_Diagram.drawio.svg)
+[View Use Case Diagram](docs/diagrams/SET09803_Group_1_Case_Diagram.drawio.svg)
 
-![Use Case Diagram](docs/diagrams/SET09803_Group_1l_Use_Case_Diagram.drawio.svg)
+![Use Case Diagram](docs/diagrams/SET09803_Group_1_Case_Diagram.drawio.svg)
 
 Detailed use case descriptions are available in the [Use Cases](use-cases/) directory.
 
