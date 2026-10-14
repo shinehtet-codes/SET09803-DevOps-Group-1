@@ -1,3 +1,4 @@
+
 name: DevOps Group 1 CI
 
 on:
@@ -8,6 +9,7 @@ jobs:
   build:
     name: Build Application
     runs-on: ubuntu-22.04
+    timeout-minutes: 10
 
     steps:
       - name: Checkout Repository
@@ -21,7 +23,22 @@ jobs:
           cache: 'maven'
 
       - name: Build with Maven
-        run: mvn package
+        run: mvn clean package
 
-      - name: Run docker compose
-        run: docker compose up --abort-on-container-exit
+      - name: Build Docker Images
+        run: docker compose build
+
+      - name: Start MySQL Database
+        run: docker compose up -d db
+
+      - name: Run Application Smoke Test
+        run: |
+          set -o pipefail
+          printf '0\n' | timeout 180s docker compose run --rm -T app | tee app-output.log
+
+          grep -q "Successfully connected to the world database." app-output.log
+          grep -q "Thank you for using the application. Goodbye!" app-output.log
+
+      - name: Stop Docker Containers
+        if: always()
+        run: docker compose down -v
