@@ -307,6 +307,7 @@ public class PopulationReport
         }
         return null; // null means no matching country or query could not complete
     }
+
     /**
      * US-28-district-population
      * Returns total population of cities in a selected district.
@@ -342,6 +343,7 @@ public class PopulationReport
         }
         return null;
     }
+
     /**
      * US-29-city-population
      * Returns the population of a city selected by name.
@@ -376,5 +378,6 @@ public class PopulationReport
         }
         return null;
     }
+
 
 }
