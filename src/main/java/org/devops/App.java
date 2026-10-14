@@ -21,7 +21,7 @@ public class App {
     private final PopulationReport populations = new PopulationReport();
     private final LanguageReport languages = new LanguageReport();
 
-    private static final String VERSION = "v0.1-alpha-5";
+    private static final String VERSION = "v0.1-alpha-6";
 
     private static final int WIDTH = 76;
 
