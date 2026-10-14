@@ -308,5 +308,76 @@ public class PopulationReport
         return null; // null means no matching country or query could not complete
     }
 
+    /**
+     * US-28-district-population
+     * Returns total population of cities in a selected district.
+     * Returns null when no matching district exists or the query fails.
+     */
+    public Long getDistrictPopulation(Connection con, String district)
+    {
+        if (con == null || district == null || district.isBlank())
+        {
+            System.out.println("Valid connection and district required.");
+            return null;
+        }
+
+        String sql =
+                "SELECT SUM(Population) AS TotalPopulation " +
+                        "FROM city WHERE District = ?";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql))
+        {
+            stmt.setString(1, district.trim());
+            try (ResultSet rs = stmt.executeQuery())
+            {
+                if (rs.next())
+                {
+                    long total = rs.getLong("TotalPopulation");
+                    return rs.wasNull() ? null : total;
+                }
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("US-28 failed: " + e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * US-29-city-population
+     * Returns the population of a city selected by name.
+     * Returns null when no matching city exists or the query fails.
+     */
+    public Long getCityPopulation(Connection con, String cityName)
+    {
+        if (con == null || cityName == null || cityName.isBlank())
+        {
+            System.out.println("Valid connection and city name required.");
+            return null;
+        }
+
+        String sql =
+                "SELECT Population AS TotalPopulation " +
+                        "FROM city WHERE Name = ? ORDER BY ID ASC LIMIT 1";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql))
+        {
+            stmt.setString(1, cityName.trim());
+            try (ResultSet rs = stmt.executeQuery())
+            {
+                if (rs.next())
+                {
+                    return rs.getLong("TotalPopulation");
+                }
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("US-29 failed: " + e.getMessage());
+        }
+        return null;
+    }
+
 
 }

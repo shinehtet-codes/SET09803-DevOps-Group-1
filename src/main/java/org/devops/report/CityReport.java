@@ -274,6 +274,85 @@ public class CityReport
         }
         return cities;
     }
+
+    /**
+     * US-13-top-n-cities-continent
+     * Returns the N most populated cities in a selected continent.
+     */
+    public ArrayList<City> getTopNCitiesByContinent(Connection con, String continent, int n)
+    {
+        ArrayList<City> cities = new ArrayList<>();
+        if (con == null || continent == null || continent.isBlank() || n <= 0)
+        {
+            System.out.println("Valid connection, continent and positive N required.");
+            return cities;
+        }
+
+        String sql =
+                "SELECT ci.Name, co.Name AS Country, ci.District, ci.Population " +
+                        "FROM city ci JOIN country co ON ci.CountryCode = co.Code " +
+                        "WHERE co.Continent = ? " +
+                        "ORDER BY ci.Population DESC, ci.ID ASC LIMIT ?";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql))
+        {
+            stmt.setString(1, continent.trim());
+            stmt.setInt(2, n);
+            try (ResultSet rs = stmt.executeQuery())
+            {
+                while (rs.next())
+                {
+                    cities.add(new City(rs.getString("Name"), rs.getString("Country"),
+                            rs.getString("District"), rs.getLong("Population")));
+                }
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("US-13 failed: " + e.getMessage());
+        }
+        return cities;
+    }
+
+    /**
+     * US-14-top-n-cities-region
+     * Returns the N most populated cities in a selected region.
+     */
+    public ArrayList<City> getTopNCitiesByRegion(Connection con, String region, int n)
+    {
+        ArrayList<City> cities = new ArrayList<>();
+        if (con == null || region == null || region.isBlank() || n <= 0)
+        {
+            System.out.println("Valid connection, region and positive N required.");
+            return cities;
+        }
+
+        String sql =
+                "SELECT ci.Name, co.Name AS Country, ci.District, ci.Population " +
+                        "FROM city ci JOIN country co ON ci.CountryCode = co.Code " +
+                        "WHERE co.Region = ? " +
+                        "ORDER BY ci.Population DESC, ci.ID ASC LIMIT ?";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql))
+        {
+            stmt.setString(1, region.trim());
+            stmt.setInt(2, n);
+            try (ResultSet rs = stmt.executeQuery())
+            {
+                while (rs.next())
+                {
+                    cities.add(new City(rs.getString("Name"), rs.getString("Country"),
+                            rs.getString("District"), rs.getLong("Population")));
+                }
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("US-14 failed: " + e.getMessage());
+        }
+        return cities;
+    }
+
     /**
      * US-31-top-n-cities-country
      * Returns the N most populated cities in the selected country.
