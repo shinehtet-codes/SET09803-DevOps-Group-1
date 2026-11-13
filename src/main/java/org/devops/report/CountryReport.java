@@ -21,15 +21,12 @@ public class CountryReport
                         "LEFT JOIN city cap ON c.Capital = cap.ID " +
                         "ORDER BY c.Population DESC, c.Code ASC";
 
-        try
+        try (Statement stmt = con.createStatement();
+             ResultSet rs = stmt.executeQuery(sql))
         {
-            Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
-
             while (rs.next())
             {
                 String capital = rs.getString("Capital");
-
                 if (capital == null)
                 {
                     capital = "N/A";
@@ -43,12 +40,8 @@ public class CountryReport
                         rs.getLong("Population"),
                         capital
                 );
-
                 countries.add(country);
             }
-
-            rs.close();
-            stmt.close();
         }
         catch (SQLException e)
         {
@@ -58,6 +51,7 @@ public class CountryReport
 
         return countries;
     }
+
 
     /**
      * US-02: Returns countries in a selected continent.

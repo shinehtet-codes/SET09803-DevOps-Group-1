@@ -21,11 +21,9 @@ public class CityReport
                         "JOIN country co ON ci.CountryCode = co.Code " +
                         "ORDER BY ci.Population DESC, ci.ID ASC";
 
-        try
+        try (Statement stmt = con.createStatement();
+             ResultSet rs = stmt.executeQuery(sql))
         {
-            Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
-
             while (rs.next())
             {
                 City city = new City(
@@ -34,12 +32,8 @@ public class CityReport
                         rs.getString("District"),
                         rs.getLong("Population")
                 );
-
                 cities.add(city);
             }
-
-            rs.close();
-            stmt.close();
         }
         catch (SQLException e)
         {
@@ -49,6 +43,7 @@ public class CityReport
 
         return cities;
     }
+
 
     public void printCities(ArrayList<City> cities)
     {
