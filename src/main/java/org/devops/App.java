@@ -13,7 +13,16 @@ public class App {
 
     private Connection con;
 
-    private final Scanner scanner = new Scanner(System.in);
+    private final Scanner scanner;
+
+    public App() {
+        this(new Scanner(System.in));
+    }
+
+    App(Scanner scanner) {
+        this.scanner = scanner;
+    }
+
 
     private final CountryReport countries = new CountryReport();
     private final CityReport cities = new CityReport();
