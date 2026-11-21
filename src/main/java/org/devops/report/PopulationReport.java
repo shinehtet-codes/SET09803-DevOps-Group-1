@@ -1,383 +1,235 @@
 package org.devops.report;
 
 import org.devops.model.PopulationSummary;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.List;
 
-public class PopulationReport
-{
-    /**
-     * US-21-population-in-each-continent
-     * Returns total, city and non-city population (with percentages)
-     * for every continent.Reuses the existing US-25 aggregation.
-     */
-    public ArrayList<PopulationSummary> getPopulationInEachContinent(Connection con)
-    {
-        if (con == null)
-        {
-            System.out.println("Valid database connection required.");
-            return new ArrayList<>();
-        }
-        return getPopulationByContinent(con);
+import static org.junit.jupiter.api.Assertions.*;
+
+class PopulationReportTest {
+
+    private static Connection connection;
+    private static PopulationReport populationReport;
+
+    @BeforeAll
+    static void setUp() throws Exception {
+        connection = WorldDatabaseTestSupport.openConnection();
+        populationReport = new PopulationReport();
     }
 
-    /**
-     * US-22: Returns a population breakdown for every region.
-     */
-    public ArrayList<PopulationSummary> getPopulationByRegion(
-            Connection con)
-    {
-        ArrayList<PopulationSummary> summaries =
-                new ArrayList<>();
-
-        String sql =
-                "SELECT c.Region AS AreaName, " +
-                        "SUM(c.Population) AS TotalPopulation, " +
-                        "SUM(COALESCE(cp.CityPopulation, 0)) AS CityPopulation " +
-                        "FROM country c " +
-                        "LEFT JOIN (" +
-                        "SELECT CountryCode, SUM(Population) AS CityPopulation " +
-                        "FROM city " +
-                        "GROUP BY CountryCode" +
-                        ") cp ON c.Code = cp.CountryCode " +
-                        "GROUP BY c.Region " +
-                        "ORDER BY c.Region ASC";
-
-        try
-        {
-            Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
-
-            while (rs.next())
-            {
-                PopulationSummary summary =
-                        new PopulationSummary(
-                                rs.getString("AreaName"),
-                                rs.getLong("TotalPopulation"),
-                                rs.getLong("CityPopulation")
-                        );
-
-                summaries.add(summary);
-            }
-
-            rs.close();
-            stmt.close();
+    @AfterAll
+    static void tearDown() throws Exception {
+        if (connection != null && !connection.isClosed()) {
+            connection.close();
         }
-        catch (SQLException e)
-        {
-            System.out.println(
-                    "Failed to get population by region."
-            );
-            System.out.println(e.getMessage());
-        }
-
-        return summaries;
     }
 
-    public void printPopulationSummaries(
-            ArrayList<PopulationSummary> summaries)
-    {
-        System.out.printf(
-                "%-30s%-18s%-18s%-12s%-20s%-12s%n",
-                "Area",
-                "Total Population",
-                "City Population",
-                "City %",
-                "Non-City Population",
-                "Non-City %"
+    @Test
+    void us21ReturnsPopulationBreakdownForEachContinent() {
+        ArrayList<PopulationSummary> results =
+                populationReport.getPopulationInEachContinent(connection);
+
+        assertFalse(results.isEmpty());
+        assertTrue(results.stream()
+                .anyMatch(row -> "Asia".equals(row.getName())));
+        assertPopulationSummariesAreValid(results);
+        assertNamesAreAscending(results);
+    }
+
+    @Test
+    void us22ReturnsPopulationBreakdownForEachRegion() {
+        ArrayList<PopulationSummary> results =
+                populationReport.getPopulationByRegion(connection);
+
+        assertFalse(results.isEmpty());
+        assertTrue(results.stream()
+                .anyMatch(row -> "Southeast Asia".equals(row.getName())));
+        assertPopulationSummariesAreValid(results);
+        assertNamesAreAscending(results);
+    }
+
+    @Test
+    void us23ReturnsPopulationBreakdownForEachCountry() {
+        ArrayList<PopulationSummary> results =
+                populationReport.getPopulationByCountry(connection);
+
+        assertFalse(results.isEmpty());
+        assertTrue(results.stream()
+                .anyMatch(row -> "China".equals(row.getName())));
+        assertPopulationSummariesAreValid(results);
+        assertNamesAreAscending(results);
+    }
+
+    @Test
+    void us24ReturnsOneWorldPopulationSummaryMatchingReferenceSql()
+            throws Exception {
+        ArrayList<PopulationSummary> results =
+                populationReport.getWorldPopulation(connection);
+
+        assertEquals(1, results.size());
+
+        PopulationSummary world = results.get(0);
+        assertEquals("World", world.getName());
+
+        long expectedTotal = queryLong(
+                "SELECT COALESCE(SUM(Population), 0) FROM country"
         );
 
-        for (PopulationSummary summary : summaries)
-        {
-            String cityPercentage =
-                    Double.isNaN(summary.getCityPercentage())
-                            ? "N/A"
-                            : String.format(
-                            "%.2f%%",
-                            summary.getCityPercentage()
-                    );
+        long expectedCityPopulation = queryLong(
+                "SELECT COALESCE(SUM(Population), 0) FROM city"
+        );
 
-            String nonCityPercentage =
-                    Double.isNaN(summary.getNonCityPercentage())
-                            ? "N/A"
-                            : String.format(
-                            "%.2f%%",
-                            summary.getNonCityPercentage()
-                    );
+        assertEquals(expectedTotal, world.getTotalPopulation());
+        assertEquals(expectedCityPopulation, world.getCityPopulation());
+        assertEquals(
+                expectedTotal - expectedCityPopulation,
+                world.getNonCityPopulation()
+        );
+    }
 
-            System.out.printf(
-                    "%-30s%-18d%-18d%-12s%-20d%-12s%n",
-                    summary.getName(),
-                    summary.getTotalPopulation(),
-                    summary.getCityPopulation(),
-                    cityPercentage,
-                    summary.getNonCityPopulation(),
-                    nonCityPercentage
+    @Test
+    void us25ReturnsPopulationTotalForEachContinent() throws Exception {
+        ArrayList<PopulationSummary> results =
+                populationReport.getPopulationByContinent(connection);
+
+        assertFalse(results.isEmpty());
+
+        PopulationSummary asia = results.stream()
+                .filter(row -> "Asia".equals(row.getName()))
+                .findFirst()
+                .orElseThrow();
+
+        long expected = queryLong(
+                "SELECT COALESCE(SUM(Population), 0) " +
+                        "FROM country WHERE Continent = 'Asia'"
+        );
+
+        assertEquals(expected, asia.getTotalPopulation());
+        assertNamesAreAscending(results);
+    }
+
+    @Test
+    void us26ReturnsPopulationForSoutheastAsia() throws Exception {
+        long actual = populationReport.getRegionPopulation(
+                connection, "Southeast Asia"
+        );
+
+        long expected = queryLong(
+                "SELECT COALESCE(SUM(Population), 0) " +
+                        "FROM country WHERE Region = 'Southeast Asia'"
+        );
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    void us27ReturnsPopulationForChina() throws Exception {
+        Long actual = populationReport.getCountryPopulation(
+                connection, "China"
+        );
+
+        long expected = queryLong(
+                "SELECT Population FROM country WHERE Name = 'China'"
+        );
+
+        assertNotNull(actual);
+        assertEquals(expected, actual.longValue());
+    }
+
+    @Test
+    void us28ReturnsPopulationForCaliforniaDistrict() throws Exception {
+        Long actual = populationReport.getDistrictPopulation(
+                connection, "California"
+        );
+
+        long expected = queryLong(
+                "SELECT COALESCE(SUM(Population), 0) " +
+                        "FROM city WHERE District = 'California'"
+        );
+
+        assertNotNull(actual);
+        assertEquals(expected, actual.longValue());
+    }
+
+    @Test
+    void us29ReturnsPopulationForNewYorkCity() throws Exception {
+        Long actual = populationReport.getCityPopulation(
+                connection, "New York"
+        );
+
+        long expected = queryLong(
+                "SELECT Population FROM city " +
+                        "WHERE Name = 'New York' ORDER BY ID ASC LIMIT 1"
+        );
+
+        assertNotNull(actual);
+        assertEquals(expected, actual.longValue());
+    }
+
+    @Test
+    void singleValueMethodsHandleNullAndBlankInputs() {
+        assertEquals(
+                0L,
+                populationReport.getRegionPopulation(null, "Southeast Asia")
+        );
+        assertEquals(
+                0L,
+                populationReport.getRegionPopulation(connection, " ")
+        );
+
+        assertNull(populationReport.getCountryPopulation(null, "China"));
+        assertNull(populationReport.getCountryPopulation(connection, ""));
+        assertNull(populationReport.getDistrictPopulation(null, "California"));
+        assertNull(populationReport.getDistrictPopulation(connection, " "));
+        assertNull(populationReport.getCityPopulation(null, "New York"));
+        assertNull(populationReport.getCityPopulation(connection, ""));
+    }
+
+    private static long queryLong(String sql) throws Exception {
+        try (PreparedStatement statement =
+                     connection.prepareStatement(sql);
+             ResultSet result = statement.executeQuery()) {
+            assertTrue(result.next(), "Reference query should return a row.");
+            return result.getLong(1);
+        }
+    }
+
+    private static void assertPopulationSummariesAreValid(
+            List<PopulationSummary> rows) {
+        for (PopulationSummary row : rows) {
+            assertNotNull(row.getName());
+            assertTrue(row.getTotalPopulation() >= 0);
+            assertTrue(row.getCityPopulation() >= 0);
+            assertEquals(
+                    row.getTotalPopulation() - row.getCityPopulation(),
+                    row.getNonCityPopulation()
+            );
+
+            if (row.getTotalPopulation() > 0) {
+                assertEquals(
+                        100.0,
+                        row.getCityPercentage() + row.getNonCityPercentage(),
+                        0.01
+                );
+            }
+        }
+    }
+
+    private static void assertNamesAreAscending(
+            List<PopulationSummary> rows) {
+        for (int i = 1; i < rows.size(); i++) {
+            assertTrue(
+                    rows.get(i - 1).getName()
+                            .compareTo(rows.get(i).getName()) <= 0,
+                    "Names should be ordered alphabetically."
             );
         }
     }
-    /**
-     * US-23: Returns population breakdown for every country.
-     */
-    public ArrayList<PopulationSummary> getPopulationByCountry(
-            Connection con)
-    {
-        ArrayList<PopulationSummary> summaries =
-                new ArrayList<>();
-
-        String sql =
-                "SELECT c.Name AS AreaName, " +
-                        "c.Population AS TotalPopulation, " +
-                        "COALESCE(cp.CityPopulation, 0) AS CityPopulation " +
-                        "FROM country c " +
-                        "LEFT JOIN (" +
-                        "SELECT CountryCode, SUM(Population) AS CityPopulation " +
-                        "FROM city " +
-                        "GROUP BY CountryCode" +
-                        ") cp ON c.Code = cp.CountryCode " +
-                        "ORDER BY c.Name ASC";
-
-        try
-        {
-            Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
-
-            while (rs.next())
-            {
-                PopulationSummary summary =
-                        new PopulationSummary(
-                                rs.getString("AreaName"),
-                                rs.getLong("TotalPopulation"),
-                                rs.getLong("CityPopulation")
-                        );
-
-                summaries.add(summary);
-            }
-
-            rs.close();
-            stmt.close();
-        }
-        catch (SQLException e)
-        {
-            System.out.println(
-                    "Failed to get population by country."
-            );
-            System.out.println(e.getMessage());
-        }
-
-        return summaries;
-    }
-    /**
-     * US-24: Returns the world population breakdown.
-     */
-    public ArrayList<PopulationSummary> getWorldPopulation(Connection con)
-    {
-        ArrayList<PopulationSummary> summaries = new ArrayList<>();
-
-        if (con == null)
-        {
-            System.out.println("No active database connection.");
-            return summaries;
-        }
-
-        String sql =
-                "SELECT SUM(c.Population) AS TotalPopulation, " +
-                        "COALESCE(SUM(cp.CityPopulation), 0) AS CityPopulation " +
-                        "FROM country c " +
-                        "LEFT JOIN (" +
-                        "SELECT CountryCode, SUM(Population) AS CityPopulation " +
-                        "FROM city GROUP BY CountryCode" +
-                        ") cp ON c.Code = cp.CountryCode";
-
-        try (Statement stmt = con.createStatement();
-             ResultSet rs = stmt.executeQuery(sql))
-        {
-            if (rs.next())
-            {
-                summaries.add(new PopulationSummary(
-                        "World",
-                        rs.getLong("TotalPopulation"),
-                        rs.getLong("CityPopulation")
-                ));
-            }
-        }
-        catch (SQLException e)
-        {
-            System.out.println("Failed to execute US-24: " + e.getMessage());
-        }
-
-        return summaries;
-    }
-    /**
-     * US-25: Population breakdown by continent
-     */
-    public ArrayList<PopulationSummary> getPopulationByContinent(Connection con)
-    {
-        ArrayList<PopulationSummary> results = new ArrayList<>();
-        if (con == null)
-        {
-            System.out.println("No database connection.");
-            return results;
-        }
-
-        String sql =
-                "SELECT c.Continent AS AreaName, SUM(c.Population) AS TotalPopulation, COALESCE(SUM(cp.CityPopulation), 0) AS CityPopulation " +
-                        "FROM country c " +
-                        "LEFT JOIN (SELECT CountryCode, SUM(Population) AS CityPopulation " +
-                        "FROM city " +
-                        "GROUP BY CountryCode) cp ON c.Code = cp.CountryCode " +
-                        "GROUP BY c.Continent " +
-                        "ORDER BY c.Continent ASC";
-
-        try (Statement stmt = con.createStatement();
-             ResultSet rs = stmt.executeQuery(sql))
-        {
-            while (rs.next())
-            {
-                results.add(new PopulationSummary(rs.getString("AreaName"), rs.getLong("TotalPopulation"), rs.getLong("CityPopulation")));
-            }
-        }
-        catch (SQLException e)
-        {
-            System.out.println("US-25 failed: " + e.getMessage());
-        }
-        return results;
-    }
-
-    /**
-     * US-26-region-population
-     */
-    public long getRegionPopulation(Connection con, String region)
-    {
-        if (con == null || region == null || region.isBlank())
-        {
-            System.out.println("Valid connection and region required.");
-            return 0L;
-        }
-
-        String sql =
-                "SELECT COALESCE(SUM(Population), 0) AS TotalPopulation " +
-                        "FROM country WHERE Region = ?";
-
-        try (PreparedStatement stmt = con.prepareStatement(sql))
-        {
-            stmt.setString(1, region.trim());
-            try (ResultSet rs = stmt.executeQuery())
-            {
-                if (rs.next())
-                {
-                    return rs.getLong("TotalPopulation");
-                }
-            }
-        }
-        catch (SQLException e)
-        {
-            System.out.println("US-26 failed: " + e.getMessage());
-        }
-        return 0L;
-    }
-
-    /**
-     *US-27-country-population
-     */
-
-    public Long getCountryPopulation(Connection con, String countryName)
-    {
-        if (con == null || countryName == null || countryName.isBlank())
-        {
-            System.out.println("Valid connection and country name required.");
-            return null;
-        }
-        String sql = "SELECT Population AS TotalPopulation FROM country WHERE Name = ?";
-        try (PreparedStatement stmt = con.prepareStatement(sql))
-        {
-            stmt.setString(1, countryName.trim());
-            try (ResultSet rs = stmt.executeQuery())
-            {
-                if (rs.next())
-                {
-                    return rs.getLong("TotalPopulation");
-                }
-            }
-        }
-        catch (SQLException e)
-        {
-            System.out.println("US-27 failed: " + e.getMessage());
-        }
-        return null; // null means no matching country or query could not complete
-    }
-
-    /**
-     * US-28-district-population
-     * Returns total population of cities in a selected district.
-     * Returns null when no matching district exists or the query fails.
-     */
-    public Long getDistrictPopulation(Connection con, String district)
-    {
-        if (con == null || district == null || district.isBlank())
-        {
-            System.out.println("Valid connection and district required.");
-            return null;
-        }
-
-        String sql =
-                "SELECT SUM(Population) AS TotalPopulation " +
-                        "FROM city WHERE District = ?";
-
-        try (PreparedStatement stmt = con.prepareStatement(sql))
-        {
-            stmt.setString(1, district.trim());
-            try (ResultSet rs = stmt.executeQuery())
-            {
-                if (rs.next())
-                {
-                    long total = rs.getLong("TotalPopulation");
-                    return rs.wasNull() ? null : total;
-                }
-            }
-        }
-        catch (SQLException e)
-        {
-            System.out.println("US-28 failed: " + e.getMessage());
-        }
-        return null;
-    }
-
-    /**
-     * US-29-city-population
-     * Returns the population of a city selected by name.
-     * Returns null when no matching city exists or the query fails.
-     */
-    public Long getCityPopulation(Connection con, String cityName)
-    {
-        if (con == null || cityName == null || cityName.isBlank())
-        {
-            System.out.println("Valid connection and city name required.");
-            return null;
-        }
-
-        String sql =
-                "SELECT Population AS TotalPopulation " +
-                        "FROM city WHERE Name = ? ORDER BY ID ASC LIMIT 1";
-
-        try (PreparedStatement stmt = con.prepareStatement(sql))
-        {
-            stmt.setString(1, cityName.trim());
-            try (ResultSet rs = stmt.executeQuery())
-            {
-                if (rs.next())
-                {
-                    return rs.getLong("TotalPopulation");
-                }
-            }
-        }
-        catch (SQLException e)
-        {
-            System.out.println("US-29 failed: " + e.getMessage());
-        }
-        return null;
-    }
-
-
 }
