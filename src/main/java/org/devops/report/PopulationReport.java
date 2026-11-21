@@ -42,7 +42,7 @@ public class PopulationReport
                         "GROUP BY CountryCode" +
                         ") cp ON c.Code = cp.CountryCode " +
                         "GROUP BY c.Region " +
-                        "ORDER BY c.Region ASC";
+                        "ORDER BY CAST(c.Region AS CHAR) ASC";
 
         try
         {
@@ -136,7 +136,7 @@ public class PopulationReport
                         "FROM city " +
                         "GROUP BY CountryCode" +
                         ") cp ON c.Code = cp.CountryCode " +
-                        "ORDER BY c.Name ASC";
+                        "ORDER BY BINARY LOWER(c.Name) ASC";
 
         try
         {
@@ -228,7 +228,7 @@ public class PopulationReport
                         "FROM city " +
                         "GROUP BY CountryCode) cp ON c.Code = cp.CountryCode " +
                         "GROUP BY c.Continent " +
-                        "ORDER BY c.Continent ASC";
+                        "ORDER BY CAST(c.Continent AS CHAR) ASC";
 
         try (Statement stmt = con.createStatement();
              ResultSet rs = stmt.executeQuery(sql))
@@ -244,6 +244,8 @@ public class PopulationReport
         }
         return results;
     }
+
+
 
     /**
      * US-26-region-population
@@ -381,3 +383,4 @@ public class PopulationReport
 
 
 }
+
