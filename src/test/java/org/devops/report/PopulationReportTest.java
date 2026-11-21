@@ -1,3 +1,4 @@
+
 package org.devops.report;
 
 import org.devops.model.PopulationSummary;
@@ -196,6 +197,7 @@ class PopulationReportTest {
         try (PreparedStatement statement =
                      connection.prepareStatement(sql);
              ResultSet result = statement.executeQuery()) {
+
             assertTrue(result.next(), "Reference query should return a row.");
             return result.getLong(1);
         }
@@ -203,10 +205,12 @@ class PopulationReportTest {
 
     private static void assertPopulationSummariesAreValid(
             List<PopulationSummary> rows) {
+
         for (PopulationSummary row : rows) {
             assertNotNull(row.getName());
             assertTrue(row.getTotalPopulation() >= 0);
             assertTrue(row.getCityPopulation() >= 0);
+
             assertEquals(
                     row.getTotalPopulation() - row.getCityPopulation(),
                     row.getNonCityPopulation()
@@ -224,11 +228,17 @@ class PopulationReportTest {
 
     private static void assertNamesAreAscending(
             List<PopulationSummary> rows) {
+
         for (int i = 1; i < rows.size(); i++) {
+            String previousName = rows.get(i - 1).getName();
+            String currentName = rows.get(i).getName();
+
             assertTrue(
-                    rows.get(i - 1).getName()
-                            .compareTo(rows.get(i).getName()) <= 0,
-                    "Names should be ordered alphabetically."
+                    previousName.compareToIgnoreCase(currentName) <= 0,
+                    "Names should be ordered alphabetically. Previous: "
+                            + previousName
+                            + ", Current: "
+                            + currentName
             );
         }
     }
