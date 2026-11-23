@@ -213,8 +213,12 @@ public class App {
 
     /*
      * MAIN MENU
+     *
+     * Package-private (not private) so unit tests in org.devops can drive
+     * the menu with a Scanner over test input, without a database.
      */
-    private void runMenu() {
+    void runMenu() {
+
 
         while (!inputClosed) {
 
