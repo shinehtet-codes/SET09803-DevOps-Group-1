@@ -1,0 +1,32 @@
+name: User story / task
+description: Add a new requirement or development task to the product backlog.
+title: "[US] "
+labels: ["user story"]
+body:
+  - type: textarea
+    id: story
+    attributes:
+      label: User story
+      description: "Use the format: As a ..., I want ..., so that ..."
+      placeholder: As an organisation analyst, I want ..., so that ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] Report columns match the specification
+        - [ ] Results are ordered by population, largest first
+        - [ ] Tests added and passing on GitHub Actions
+    validations:
+      required: true
+
+  - type: input
+    id: use-case
+    attributes:
+      label: Related use case
+      placeholder: use-cases/US-01.md
+    validations:
+      required: false
