@@ -4,9 +4,49 @@ on:
   push:
   pull_request:
 
+# Default to read-only. Only the deploy job is given write access.
+permissions:
+  contents: read
+
 jobs:
-  build:
-    name: Build Application
+  # ---------------------------------------------------------------
+  # 1. Unit tests: no database. Runs every test class named *UnitTest.
+  # ---------------------------------------------------------------
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      # failIfNoSpecifiedTests=false keeps this job green even before
+      # any *UnitTest class has been merged.
+      - name: Run Unit Tests
+        run: mvn -B test "-Dtest=*UnitTest" "-Dsurefire.failIfNoSpecifiedTests=false"
+
+      - name: Upload Unit Test Coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./target/site/jacoco/jacoco.xml
+          flags: unit-tests
+          fail_ci_if_error: false
+          verbose: true
+
+  # ---------------------------------------------------------------
+  # 2. Integration tests: start MySQL, then run ALL tests against it.
+  # ---------------------------------------------------------------
+  integration-tests:
+    name: Integration Tests
     runs-on: ubuntu-22.04
     timeout-minutes: 15
 
@@ -21,11 +61,9 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      # Start MySQL before running database-dependent tests.
       - name: Start MySQL Database
         run: docker compose up -d db
 
-      # Wait until MySQL is ready to accept connections.
       - name: Wait for MySQL
         run: |
           for attempt in {1..60}; do
@@ -34,36 +72,137 @@ jobs:
               echo "MySQL is ready."
               exit 0
             fi
-
             echo "Waiting for MySQL ($attempt/60)..."
             sleep 2
           done
-
           echo "MySQL did not become ready in time."
           docker compose logs db
           exit 1
 
-      # Run automated tests and package the application.
-      - name: Run Tests and Build with Maven
+      - name: Run All Tests Against the Database
         env:
           TEST_DB_URL: jdbc:mysql://127.0.0.1:33060/world?allowPublicKeyRetrieval=true&useSSL=false
           TEST_DB_USER: root
           TEST_DB_PASSWORD: example
-        run: mvn clean package
+        run: mvn -B verify
+
+      - name: Upload Integration Test Coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./target/site/jacoco/jacoco.xml
+          flags: integration-tests
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: Stop Docker Containers
+        if: always()
+        run: docker compose down -v
+
+  # ---------------------------------------------------------------
+  # 3. Build the JAR and Docker images, then smoke-test the app.
+  # ---------------------------------------------------------------
+  build:
+    name: Build and Smoke Test
+    needs: [unit-tests, integration-tests]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      # Tests already passed in the two jobs above.
+      - name: Package JAR
+        run: mvn -B package -DskipTests
+
+      - name: Start MySQL Database
+        run: docker compose up -d db
+
+      - name: Wait for MySQL
+        run: |
+          for attempt in {1..60}; do
+            if docker compose exec -T db mysqladmin ping \
+              -h 127.0.0.1 -uroot -pexample --silent; then
+              echo "MySQL is ready."
+              exit 0
+            fi
+            echo "Waiting for MySQL ($attempt/60)..."
+            sleep 2
+          done
+          echo "MySQL did not become ready in time."
+          docker compose logs db
+          exit 1
 
       - name: Build Docker Images
         run: docker compose build
 
-      # Keep the existing application smoke test.
       - name: Run Application Smoke Test
         run: |
           set -o pipefail
           printf '0\n' | timeout 180s docker compose run --rm -T app | tee app-output.log
-
           grep -q "Successfully connected to the world database." app-output.log
           grep -q "Thank you for using the application. Goodbye!" app-output.log
 
-      # Clean up even if a previous step fails.
+      - name: Upload JAR as Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: world-population-reports-jar
+          path: target/*.jar
+
       - name: Stop Docker Containers
         if: always()
         run: docker compose down -v
+
+  # ---------------------------------------------------------------
+  # 4. Deploy: publish the JAR to GitHub Releases (Lab 08).
+  #    Only runs on a push to master, after everything else passed.
+  # ---------------------------------------------------------------
+  deploy:
+    name: Deploy Release
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Package JAR
+        run: mvn -B package -DskipTests
+
+      # Reads <version> from pom.xml, e.g. 0.2.0 -> tag v0.2.0
+      - name: Read Project Version
+        id: version
+        run: |
+          VERSION=$(mvn -B -q help:evaluate -Dexpression=project.version -DforceStdout)
+          echo "Project version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          prerelease: false
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: target/*.jar
