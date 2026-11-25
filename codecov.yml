@@ -1,0 +1,20 @@
+# Codecov settings for SET09803 DevOps Group 1.
+# Coverage is reported for information only, so a small drop in coverage
+# never blocks a pull request. Coverage from the unit-test and
+# integration-test jobs is shown as two separate flags.
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
+
+flag_management:
+  default_rules:
+    carryforward: true
+
+comment:
+  layout: "reach, diff, flags, files"
+  require_changes: false
