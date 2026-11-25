@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Project README
+    url: https://github.com/shinehtet-codes/SET09803-DevOps-Group-1#readme
+    about: Check how to build, run and test the application before reporting a bug.
