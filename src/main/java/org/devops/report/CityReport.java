@@ -14,6 +14,12 @@ public class CityReport
     {
         ArrayList<City> cities = new ArrayList<>();
 
+        if (con == null)
+        {
+            System.out.println("US-07 failed: no active database connection.");
+            return cities;
+        }
+
         String sql =
                 "SELECT ci.Name, co.Name AS Country, " +
                         "ci.District, ci.Population " +
@@ -45,8 +51,18 @@ public class CityReport
     }
 
 
+    /**
+     * Prints a city report. A null list prints a message instead of failing,
+     * and null rows are skipped.
+     */
     public void printCities(ArrayList<City> cities)
     {
+        if (cities == null)
+        {
+            System.out.println("No cities to display.");
+            return;
+        }
+
         System.out.printf(
                 "%-40s%-40s%-30s%-15s%n",
                 "Name",
@@ -57,6 +73,11 @@ public class CityReport
 
         for (City city : cities)
         {
+            if (city == null)
+            {
+                continue;
+            }
+
             System.out.printf(
                     "%-40s%-40s%-30s%-15d%n",
                     city.getName(),
@@ -75,6 +96,12 @@ public class CityReport
     {
         ArrayList<City> cities = new ArrayList<>();
 
+        if (con == null || continent == null || continent.isBlank())
+        {
+            System.out.println("US-08 failed: valid connection and continent required.");
+            return cities;
+        }
+
         String sql =
                 "SELECT ci.Name, co.Name AS Country, " +
                         "ci.District, ci.Population " +
@@ -83,27 +110,24 @@ public class CityReport
                         "WHERE co.Continent = ? " +
                         "ORDER BY ci.Population DESC, ci.ID ASC";
 
-        try
+        // try-with-resources closes the statement and result set
+        // even when the query throws an exception.
+        try (PreparedStatement stmt = con.prepareStatement(sql))
         {
-            PreparedStatement stmt = con.prepareStatement(sql);
-            stmt.setString(1, continent);
+            stmt.setString(1, continent.trim());
 
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next())
+            try (ResultSet rs = stmt.executeQuery())
             {
-                City city = new City(
-                        rs.getString("Name"),
-                        rs.getString("Country"),
-                        rs.getString("District"),
-                        rs.getLong("Population")
-                );
-
-                cities.add(city);
+                while (rs.next())
+                {
+                    cities.add(new City(
+                            rs.getString("Name"),
+                            rs.getString("Country"),
+                            rs.getString("District"),
+                            rs.getLong("Population")
+                    ));
+                }
             }
-
-            rs.close();
-            stmt.close();
         }
         catch (SQLException e)
         {
@@ -236,6 +260,8 @@ public class CityReport
         }
         return cities;
     }
+
+
 
     /**
      * US-12-top-n-cities-world
