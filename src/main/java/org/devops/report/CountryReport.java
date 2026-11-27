@@ -14,6 +14,12 @@ public class CountryReport
     {
         ArrayList<Country> countries = new ArrayList<>();
 
+        if (con == null)
+        {
+            System.out.println("US-01 failed: no active database connection.");
+            return countries;
+        }
+
         String sql =
                 "SELECT c.Code, c.Name, c.Continent, c.Region, " +
                         "c.Population, cap.Name AS Capital " +
@@ -62,6 +68,12 @@ public class CountryReport
     {
         ArrayList<Country> countries = new ArrayList<>();
 
+        if (con == null || continent == null || continent.isBlank())
+        {
+            System.out.println("US-02 failed: valid connection and continent required.");
+            return countries;
+        }
+
         String sql =
                 "SELECT c.Code, c.Name, c.Continent, c.Region, " +
                         "c.Population, cap.Name AS Capital " +
@@ -70,36 +82,33 @@ public class CountryReport
                         "WHERE c.Continent = ? " +
                         "ORDER BY c.Population DESC, c.Code ASC";
 
-        try
+        // try-with-resources closes the statement and result set
+        // even when the query throws an exception.
+        try (PreparedStatement stmt = con.prepareStatement(sql))
         {
-            PreparedStatement stmt = con.prepareStatement(sql);
-            stmt.setString(1, continent);
+            stmt.setString(1, continent.trim());
 
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next())
+            try (ResultSet rs = stmt.executeQuery())
             {
-                String capital = rs.getString("Capital");
-
-                if (capital == null)
+                while (rs.next())
                 {
-                    capital = "N/A";
+                    String capital = rs.getString("Capital");
+
+                    if (capital == null)
+                    {
+                        capital = "N/A";
+                    }
+
+                    countries.add(new Country(
+                            rs.getString("Code"),
+                            rs.getString("Name"),
+                            rs.getString("Continent"),
+                            rs.getString("Region"),
+                            rs.getLong("Population"),
+                            capital
+                    ));
                 }
-
-                Country country = new Country(
-                        rs.getString("Code"),
-                        rs.getString("Name"),
-                        rs.getString("Continent"),
-                        rs.getString("Region"),
-                        rs.getLong("Population"),
-                        capital
-                );
-
-                countries.add(country);
             }
-
-            rs.close();
-            stmt.close();
         }
         catch (SQLException e)
         {
@@ -117,6 +126,12 @@ public class CountryReport
      */
     public void printCountries(ArrayList<Country> countries)
     {
+        if (countries == null)
+        {
+            System.out.println("No countries to display.");
+            return;
+        }
+
         System.out.printf(
                 "%-5s%-40s%-20s%-30s%-15s%-30s%n",
                 "Code",
@@ -129,6 +144,11 @@ public class CountryReport
 
         for (Country country : countries)
         {
+            if (country == null)
+            {
+                continue;
+            }
+
             System.out.printf(
                     "%-5s%-40s%-20s%-30s%-15d%-30s%n",
                     country.getCode(),
@@ -232,6 +252,7 @@ public class CountryReport
             System.out.println("Valid connection, continent and positive N required.");
             return countries;
         }
+
 
         String sql =
                 "SELECT c.Code, c.Name, c.Continent, c.Region, " +

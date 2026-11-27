@@ -31,6 +31,12 @@ public class PopulationReport
         ArrayList<PopulationSummary> summaries =
                 new ArrayList<>();
 
+        if (con == null)
+        {
+            System.out.println("US-22 failed: no active database connection.");
+            return summaries;
+        }
+
         String sql =
                 "SELECT c.Region AS AreaName, " +
                         "SUM(c.Population) AS TotalPopulation, " +
@@ -44,25 +50,19 @@ public class PopulationReport
                         "GROUP BY c.Region " +
                         "ORDER BY CAST(c.Region AS CHAR) ASC";
 
-        try
+        // try-with-resources closes the statement and result set
+        // even when the query throws an exception.
+        try (Statement stmt = con.createStatement();
+             ResultSet rs = stmt.executeQuery(sql))
         {
-            Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
-
             while (rs.next())
             {
-                PopulationSummary summary =
-                        new PopulationSummary(
-                                rs.getString("AreaName"),
-                                rs.getLong("TotalPopulation"),
-                                rs.getLong("CityPopulation")
-                        );
-
-                summaries.add(summary);
+                summaries.add(new PopulationSummary(
+                        rs.getString("AreaName"),
+                        rs.getLong("TotalPopulation"),
+                        rs.getLong("CityPopulation")
+                ));
             }
-
-            rs.close();
-            stmt.close();
         }
         catch (SQLException e)
         {
@@ -75,9 +75,19 @@ public class PopulationReport
         return summaries;
     }
 
+    /**
+     * Prints a population report. A null list prints a message instead of
+     * failing, and null rows are skipped.
+     */
     public void printPopulationSummaries(
             ArrayList<PopulationSummary> summaries)
     {
+        if (summaries == null)
+        {
+            System.out.println("No population data to display.");
+            return;
+        }
+
         System.out.printf(
                 "%-30s%-18s%-18s%-12s%-20s%-12s%n",
                 "Area",
@@ -90,6 +100,11 @@ public class PopulationReport
 
         for (PopulationSummary summary : summaries)
         {
+            if (summary == null)
+            {
+                continue;
+            }
+
             String cityPercentage =
                     Double.isNaN(summary.getCityPercentage())
                             ? "N/A"
@@ -126,6 +141,12 @@ public class PopulationReport
         ArrayList<PopulationSummary> summaries =
                 new ArrayList<>();
 
+        if (con == null)
+        {
+            System.out.println("US-23 failed: no active database connection.");
+            return summaries;
+        }
+
         String sql =
                 "SELECT c.Name AS AreaName, " +
                         "c.Population AS TotalPopulation, " +
@@ -138,25 +159,19 @@ public class PopulationReport
                         ") cp ON c.Code = cp.CountryCode " +
                         "ORDER BY BINARY LOWER(c.Name) ASC";
 
-        try
+        // try-with-resources closes the statement and result set
+        // even when the query throws an exception.
+        try (Statement stmt = con.createStatement();
+             ResultSet rs = stmt.executeQuery(sql))
         {
-            Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
-
             while (rs.next())
             {
-                PopulationSummary summary =
-                        new PopulationSummary(
-                                rs.getString("AreaName"),
-                                rs.getLong("TotalPopulation"),
-                                rs.getLong("CityPopulation")
-                        );
-
-                summaries.add(summary);
+                summaries.add(new PopulationSummary(
+                        rs.getString("AreaName"),
+                        rs.getLong("TotalPopulation"),
+                        rs.getLong("CityPopulation")
+                ));
             }
-
-            rs.close();
-            stmt.close();
         }
         catch (SQLException e)
         {
@@ -220,6 +235,8 @@ public class PopulationReport
             System.out.println("No database connection.");
             return results;
         }
+
+
 
         String sql =
                 "SELECT c.Continent AS AreaName, SUM(c.Population) AS TotalPopulation, COALESCE(SUM(cp.CityPopulation), 0) AS CityPopulation " +
@@ -383,4 +400,3 @@ public class PopulationReport
 
 
 }
-

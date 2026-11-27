@@ -14,30 +14,31 @@ public class CapitalReport
     {
         ArrayList<CapitalCity> capitals = new ArrayList<>();
 
+        if (con == null)
+        {
+            System.out.println("US-15 failed: no active database connection.");
+            return capitals;
+        }
+
         String sql =
                 "SELECT ci.Name, co.Name AS Country, ci.Population " +
                         "FROM country co " +
                         "JOIN city ci ON co.Capital = ci.ID " +
                         "ORDER BY ci.Population DESC, ci.ID ASC";
 
-        try
+        // try-with-resources closes the statement and result set
+        // even when the query throws an exception.
+        try (Statement stmt = con.createStatement();
+             ResultSet rs = stmt.executeQuery(sql))
         {
-            Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
-
             while (rs.next())
             {
-                CapitalCity capital = new CapitalCity(
+                capitals.add(new CapitalCity(
                         rs.getString("Name"),
                         rs.getString("Country"),
                         rs.getLong("Population")
-                );
-
-                capitals.add(capital);
+                ));
             }
-
-            rs.close();
-            stmt.close();
         }
         catch (SQLException e)
         {
@@ -48,8 +49,18 @@ public class CapitalReport
         return capitals;
     }
 
+    /**
+     * Prints a capital city report. A null list prints a message instead of
+     * failing, and null rows are skipped.
+     */
     public void printCapitalCities(ArrayList<CapitalCity> capitals)
     {
+        if (capitals == null)
+        {
+            System.out.println("No capital cities to display.");
+            return;
+        }
+
         System.out.printf(
                 "%-40s%-40s%-15s%n",
                 "Name",
@@ -59,6 +70,11 @@ public class CapitalReport
 
         for (CapitalCity capital : capitals)
         {
+            if (capital == null)
+            {
+                continue;
+            }
+
             System.out.printf(
                     "%-40s%-40s%-15d%n",
                     capital.getName(),
@@ -76,6 +92,12 @@ public class CapitalReport
     {
         ArrayList<CapitalCity> capitals = new ArrayList<>();
 
+        if (con == null || continent == null || continent.isBlank())
+        {
+            System.out.println("US-16 failed: valid connection and continent required.");
+            return capitals;
+        }
+
         String sql =
                 "SELECT ci.Name, co.Name AS Country, ci.Population " +
                         "FROM country co " +
@@ -83,26 +105,21 @@ public class CapitalReport
                         "WHERE co.Continent = ? " +
                         "ORDER BY ci.Population DESC, ci.ID ASC";
 
-        try
+        try (PreparedStatement stmt = con.prepareStatement(sql))
         {
-            PreparedStatement stmt = con.prepareStatement(sql);
-            stmt.setString(1, continent);
+            stmt.setString(1, continent.trim());
 
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next())
+            try (ResultSet rs = stmt.executeQuery())
             {
-                CapitalCity capital = new CapitalCity(
-                        rs.getString("Name"),
-                        rs.getString("Country"),
-                        rs.getLong("Population")
-                );
-
-                capitals.add(capital);
+                while (rs.next())
+                {
+                    capitals.add(new CapitalCity(
+                            rs.getString("Name"),
+                            rs.getString("Country"),
+                            rs.getLong("Population")
+                    ));
+                }
             }
-
-            rs.close();
-            stmt.close();
         }
         catch (SQLException e)
         {
@@ -236,6 +253,8 @@ public class CapitalReport
         }
         return capitals;
     }
+
+
 
     /**
      *US-20-top-n-capitals-region
