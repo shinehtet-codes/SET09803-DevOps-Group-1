@@ -1,4 +1,3 @@
-
 # SET09803 DevOps Group 1
 
 A population reporting system developed using Java, Maven, MySQL, Docker and GitHub Actions.
@@ -7,11 +6,13 @@ The application generates reports on countries, cities, capital cities, populati
 
 The project follows Scrum and DevOps practices to support collaborative development, continuous integration and version control.
 
-## Build Status and Release
+## Build Status, Coverage and Release
 
 [![Build Status - master](https://github.com/shinehtet-codes/SET09803-DevOps-Group-1/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/shinehtet-codes/SET09803-DevOps-Group-1/actions/workflows/main.yml?query=branch%3Amaster)
 
 [![Build Status - develop](https://github.com/shinehtet-codes/SET09803-DevOps-Group-1/actions/workflows/main.yml/badge.svg?branch=develop)](https://github.com/shinehtet-codes/SET09803-DevOps-Group-1/actions/workflows/main.yml?query=branch%3Adevelop)
+
+[![Code Coverage - master](https://codecov.io/gh/shinehtet-codes/SET09803-DevOps-Group-1/branch/master/graph/badge.svg)](https://codecov.io/gh/shinehtet-codes/SET09803-DevOps-Group-1)
 
 [![Release](https://img.shields.io/github/v/release/shinehtet-codes/SET09803-DevOps-Group-1?include_prereleases&label=Release)](https://github.com/shinehtet-codes/SET09803-DevOps-Group-1/releases)
 
@@ -19,14 +20,14 @@ The project follows Scrum and DevOps practices to support collaborative developm
 
 ## Technologies
 
-- Java 25
-- Apache Maven
-- MySQL
-- Docker
-- Docker Compose
-- Git
-- GitHub
-- GitHub Actions
+-Java 25
+-Apache Maven
+-MySQL
+-Docker
+-Docker Compose
+-Git
+-GitHub
+-GitHub Actions
 
 ## Development Methodology
 
@@ -40,11 +41,11 @@ The use case diagram illustrates the interaction between the report user and the
 
 It contains 32 reporting use cases organised into five categories:
 
-- Country Reports
-- City Reports
-- Capital City Reports
-- Population Reports
-- Language Reports
+-Country Reports
+-City Reports
+-Capital City Reports
+-Population Reports
+-Language Reports
 
 [View Use Case Diagram](docs/diagrams/SET09803_Group_1_Case_Diagram.drawio.svg)
 
@@ -53,6 +54,8 @@ It contains 32 reporting use cases organised into five categories:
 Detailed use case descriptions are available in the [Use Cases](use-cases/) directory.
 
 ## Report Requirements and Evidence
+
+**32 requirements of 32 have been implemented, which is 100%.**
 
 The following tables list all 32 reporting requirements and provide links to their corresponding output screenshots.
 
@@ -139,6 +142,48 @@ docker compose run --rm --build app
 
 The application provides an interactive console menu that allows users to select a report category, choose a report and enter the required parameters.
 
+## Testing
+
+The project has two kinds of automated tests, both written with JUnit 5.
+
+
+
+| Type | Naming | Database needed | What it checks |
+|---|---|---|---|
+| Unit tests | `*UnitTest.java` | No | Menu input validation, model calculations, report printing, null and invalid input handling |
+| Integration tests | `*ReportTest.java` | Yes (MySQL `world`) | Every report query returns the correct rows, filters and ordering |
+
+Run only the unit tests (no database required):
+
+```bash
+mvn test "-Dtest=*UnitTest" "-Dsurefire.failIfNoSpecifiedTests=false"
+```
+
+Run all tests (start the database first with `docker compose up -d db`):
+
+```bash
+mvn clean verify
+```
+
+Code coverage is measured with JaCoCo and published to [Codecov](https://codecov.io/gh/shinehtet-codes/SET09803-DevOps-Group-1) on every GitHub Actions run. A local HTML report is written to `target/site/jacoco/index.html`.
+
+## Continuous Integration and Deployment
+
+GitHub Actions (`.github/workflows/main.yml`) runs on every push and pull request:
+
+1.**Unit Tests** - runs all `*UnitTest` classes without a database and uploads coverage.
+2.**Integration Tests** - starts MySQL in Docker, runs every test against the `world` database and uploads coverage.
+3.**Build and Smoke Test** - builds the JAR and Docker images and checks the application connects and exits cleanly.
+4.**Deploy Release** - on pushes to `master` only, publishes the JAR to [GitHub Releases](https://github.com/shinehtet-codes/SET09803-DevOps-Group-1/releases), tagged with the version in `pom.xml`.
+
+## Bug Reporting
+
+Bugs are reported through GitHub Issues using the **Bug report** template:
+
+1.Go to [Issues -> New issue](https://github.com/shinehtet-codes/SET09803-DevOps-Group-1/issues/new/choose).
+2.Choose **Bug report** and fill in the affected report, steps to reproduce, expected and actual results, and severity.
+3.The issue is labelled `bug` and `triage` automatically. The team then moves it through `confirmed` -> `in progress` -> `fixed` on the project board.
+
 ## Team
 
 | Member | Role |
@@ -158,4 +203,4 @@ All 32 reporting requirements have corresponding screenshot evidence in the repo
 
 Continuous integration is managed through GitHub Actions, with separate build status badges for the `master` and `develop` branches.
 
-Automated test coverage reporting will be addressed in the next development phase.
+Unit and integration tests run on every push, code coverage is reported through Codecov, and releases are deployed automatically to GitHub Releases from `master`.
